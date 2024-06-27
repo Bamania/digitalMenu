@@ -103,7 +103,7 @@ const Login = () => {
       // const decodedToken = jwt_decode(token);
       // console.log(decodedToken); 
       // localStorage.setItem('token', token);
-      navigate('/Menu'); // 
+      navigate('/table'); // 
     } catch (error) {
       setError(error.message);
     }
@@ -207,7 +207,7 @@ const Login = () => {
             <div className="text-center">
               <p className="text-gray-600">Didn’t receive code?</p>
               <p className="text-gray-600">
-                00 : {timer < 10 ? `0${timer}` : timer}
+                00 : {`timer < 10 ? 0${timer} : timer`}
               </p>
               <button
                 className="text-pink-500"
