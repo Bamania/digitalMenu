@@ -13,6 +13,7 @@ const MenuPage = () => {
   const isInitialMount = useRef(true);
   const [isOrderSummaryVisible, setIsOrderSummaryVisible] = useState(true);
   const [tableNo, setTableNo] = useState('');
+  // const [foodItems, setfoodItems] = useState(""); // Mocked table info
   const navigate = useNavigate();
 
   // Load order from localStorage
@@ -21,6 +22,19 @@ const MenuPage = () => {
     if (savedOrder) {
       setOrder(JSON.parse(savedOrder));
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchFoodItems = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/api/menu');
+        setfoodItems(response.data);
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+      }
+    };
+
+    fetchFoodItems();
   }, []);
 
   // Save order to localStorage
