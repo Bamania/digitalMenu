@@ -6,6 +6,8 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const [emailformail, setemailformail] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
   const [flag, setFlag] = useState(false);
@@ -97,7 +99,9 @@ const Login = () => {
 
       // If login is successful, store the authToken and navigate to the desired route
       localStorage.setItem('token', data.token);
-      
+      localStorage.setItem('email', email);
+      console.log(email)
+    
 
       // Decode token to get user information if needed
       // const decodedToken = jwt_decode(token);

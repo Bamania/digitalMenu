@@ -10,103 +10,110 @@ export const MyBasket = () => {
   const selectedPayment = location.state?.selectedPayment || [];
   const selectedCard = location.state?.selectedCard || [];
   const [orderPlaced, setOrderPlaced] = useState(false); // State to track if order is placed
+const emailAdress=localStorage.getItem('email');
+console.log("email adress saved from login",emailAdress)
+useEffect(() => {
+  // Calculate discounted prices for all items in the order
+  const updatedOrder = { ...order };
+  Object.keys(updatedOrder).forEach(category => {
+    updatedOrder[category] = updatedOrder[category].map(item => ({
+      ...item,
+      discountedPrice: item.special === 'yes' ? calculateDiscountedPrice(item) : item.price
+    }));
+  });
+  setOrder(updatedOrder);
+}, [initialOrder]);
 
-  useEffect(() => {
-    // Calculate discounted prices for all items in the order
-    const updatedOrder = { ...order };
-    Object.keys(updatedOrder).forEach(category => {
-      updatedOrder[category] = updatedOrder[category].map(item => ({
-        ...item,
-        discountedPrice: item.special === 'yes' ? calculateDiscountedPrice(item) : item.price
-      }));
-    });
-    setOrder(updatedOrder);
-  }, [initialOrder]);
+const calculateDiscountedPrice = (item) => {
+  const discountRate = 0.6; // Assuming a 40% discount
+  const originalPrice = parseFloat(item.price.slice(1));
+  const discountedPrice = (originalPrice * discountRate).toFixed(2);
+  return `$${discountedPrice}`;
+};
 
-  const calculateDiscountedPrice = (item) => {
-    const discountRate = 0.6; // Assuming a 40% discount
-    const originalPrice = parseFloat(item.price.slice(1));
-    const discountedPrice = (originalPrice * discountRate).toFixed(2);
-    return `$${discountedPrice}`;
-  };
-
-  const handlePlaceOrder = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('User is not logged in');
-      return;
-    }
-
-    try {
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.userId;
-
-      const orderData = {
-        userId: userId,
-        items: Object.keys(order).map(category =>
-          order[category].map(item => ({
-            category: category,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.discountedPrice || item.price,
-            special: item.special
-          }))
-        ).flat(),
-        orderDate: new Date().toISOString()
-      };
-
-      const response = await fetch('http://localhost:4000/api/order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const savedOrder = await response.json();
-      alert("Order placed successfully");
-      setOrderPlaced(true); // Set order placed flag to true
-
-      // Clear the local storage and reset the order state
-      localStorage.removeItem('order');
-      setOrder({});
-    } catch (error) {
-      console.error('Error placing order:', error);
-    }
-  };
-
-  const calculateTotalPrice = () => {
-    let totalPrice = 0;
-
-    if (Object.keys(order).length > 0) {
-      Object.keys(order).forEach(category => {
-        order[category].forEach(item => {
-          const itemPrice = (item.special === 'yes' && item.discountedPrice) ?
-            parseFloat(item.discountedPrice.slice(1)) * item.quantity :
-            parseFloat(item.price.slice(1)) * item.quantity;
-
-          totalPrice += itemPrice;
-        });
-      });
-    }
-
-    return totalPrice.toFixed(2);
-  };
-  const goToPayments = () => {
-    navigate('/payment', { state: { order} });
+const handlePlaceOrder = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('User is not logged in');
+    return;
   }
-  const goToMenu = () => {
-    navigate('/menu', { state: { order } });
-  };
 
-  const goToOrderHistory = () => {
-    navigate('/history'); // Navigate to order history page
-  };
+  try {
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.userId;
+
+    const items = Object.keys(order).map(category =>
+      order[category].map(item => ({
+        category: category,
+        name: item.name,
+        quantity: item.quantity,
+        price: parseFloat((item.discountedPrice || item.price).slice(1)), // Convert price to number
+        special: item.special
+      }))
+    ).flat();
+    
+    const totalAmount = items.reduce((total, item) => total + item.price * item.quantity, 0);
+
+    const orderData = {
+      userId: userId,
+      items: items,
+      orderDate: new Date().toISOString(),
+      totalAmount: totalAmount,
+      emailAdress:emailAdress
+    };
+    console.log('Order data being sent:', orderData); //logging to check
+    const response = await fetch('http://localhost:4000/api/order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const savedOrder = await response.json();
+    alert("Order placed successfully");
+    setOrderPlaced(true); // Set order placed flag to true
+
+    // Clear the local storage and reset the order state
+    localStorage.removeItem('order');
+    setOrder({});
+  } catch (error) {
+    console.error('Error placing order:', error);
+  }
+};
+
+const calculateTotalPrice = () => {
+  let totalPrice = 0;
+
+  if (Object.keys(order).length > 0) {
+    Object.keys(order).forEach(category => {
+      order[category].forEach(item => {
+        const itemPrice = (item.special === 'yes' && item.discountedPrice) ?
+          parseFloat(item.discountedPrice.slice(1)) * item.quantity :
+          parseFloat(item.price.slice(1)) * item.quantity;
+
+        totalPrice += itemPrice;
+      });
+    });
+  }
+
+  return totalPrice.toFixed(2);
+};
+const goToPayments = () => {
+  navigate('/payment', { state: { order} });
+}
+const goToMenu = () => {
+  navigate('/menu', { state: { order } });
+};
+
+const goToOrderHistory = () => {
+  navigate('/history'); // Navigate to order history page
+};
 
   return (
     <div className="max-w-lg mx-auto mb-32 p-4 bg-white rounded-lg shadow-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">

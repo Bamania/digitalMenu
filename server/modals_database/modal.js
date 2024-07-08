@@ -16,23 +16,20 @@ const OrderSchema = new Schema({
 const UserSchema = new Schema({
   name: {
     type: String,
-    required: true,
+   
     
   },
   phone: {
     type: Number,
-    required: true,
-    unique: true,
-    trim: true,
+   
   },
   email: {
     type: String,
-    required: true,
-    unique: true
+    
   },
   password: {
     type: String,
-    required: true,
+   
   },
   orders: [OrderSchema],
   createdAt: {
@@ -54,4 +51,4 @@ const FoodItem = mongoose.model('FoodItem', foodItemSchema);
 //add orders !
 
 const User = mongoose.model('User', UserSchema, 'Menus');
-export default { User, FoodItem };
+export default { User, FoodItem };

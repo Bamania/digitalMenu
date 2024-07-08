@@ -1,5 +1,5 @@
 import express from 'express';
-
+import nodemailer from "nodemailer";
 import FoodItem from '../modals_database/modal.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -50,6 +50,7 @@ console.log(req.body)
     const hashedPassword = await bcrypt.hash(password, 10);
     // Create a new user record in the database
     const userData = await FoodItem.User.create({ name,phone,password: hashedPassword ,email});
+    console.log("details of user",userData);
     console.log('User registered successfully');
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -58,33 +59,6 @@ console.log(req.body)
   }
 });
 
-// router.post('/login', async (req, res) => {
-//   const { phone,email,password } = req.body;
-
-//   try {
-//     // Find the user by their phone number
-//     const user = await User.findOne({ email });
-
-//     if (!user) {
-//       return res.status(400).json({ error: 'Invalid phone number or password' });
-//     }
-
-//     // Compare the password provided with the hashed password in the database
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//       return res.status(400).json({ error: 'Invalid phone number or password' });
-//     }
-
-//     // If credentials are valid, create a JWT token
-//     const tokenPayload = { id: user._id, phone: user.phone };
-//     const authToken = jwt.sign(tokenPayload, jwtsecret, { expiresIn: '24h' });
-
-//     res.status(200).json({ message: 'Logged in successfully', authToken });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -112,7 +86,14 @@ router.post('/login', async (req, res) => {
 
 
 router.post('/order', verifyToken, async (req, res) => {
-  const { items, totalAmount } = req.body;
+  console.log("hello from the /order");
+  console.log("data from the frontend",req.body);
+  const items =req.body.items;
+  const userId =req.body.userId;
+  
+ const totalAmount = req.body.totalAmount;
+  const emailAdress = req.body.emailAdress;
+  console.log(items, userId,emailAdress,totalAmount);
 
 
   try {
@@ -122,15 +103,77 @@ router.post('/order', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    user.orders.push({ items, totalAmount });
+    user.orders.push({ items,totalAmount});
 
     await user.save();
+    
+
+    const transporter = nodemailer.createTransport({
+      service:"gmail.com",
+    host: "smtp.gmail.email",
+    port: 587,
+    secure: false, // Use `true` for port 465, `false` for all other ports
+    auth: {
+      user: "amany29074@gmail.com",
+      pass: "aego depe zgtk hylw",
+    },
+  });
+  
+  
+  const emailoptions = {
+      from: {
+          name: "Aman",
+          address: "amany29074@gmail.com",  // sender address
+    
+      }, // sender address
+      to: emailAdress, // list of receivers
+      subject: "Order Confirmation", // Subject line
+      text: "thank you for ordering ,yamake kudasai daddy", // plain text body
+      html: "<b>thank you for ordering ,yamake kudasai daddy</b>", // html body
+    };
+  
+  
+  
+    const sendemail=async(transporter,emailoptions)=>{
+      try {
+              await transporter.sendMail(emailoptions)
+              console.log("Email sent successfully")
+      } catch (error) {
+          console.log(error)
+      }
+  
+    }
+
+    await sendemail(transporter,emailoptions)
+  
     res.status(201).json({ message: 'Order placed successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// router.post('/order', verifyToken, async (req, res) => {
+//   const { items, totalAmount } = req.body;
+//   const userId = req.body.userId;
+//   try {
+//     const user = await FoodItem.User.findById(userId);
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     user.orders.push({ items,   totalAmount
+//  });
+
+//     await user.save();
+//     res.status(201).json({ message: 'Order placed successfully' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 
 router.get('/orderhist', verifyToken, async (req, res) => {
   try {
