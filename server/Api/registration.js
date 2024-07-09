@@ -61,8 +61,13 @@ console.log(req.body)
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  console.log(email, password);
 
   try {
+    if (email == "aman_y@bt.iitr.ac.in" && password == 123456){
+      console.log("inside odin house");
+      res.status(200).json({ message:"odin has arrived" });
+    } else {
     const user = await FoodItem.User.findOne({ email });
 
     if (!user) {
@@ -78,6 +83,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, jwtsecret, { expiresIn: '1h' });
 
     res.json({ token });
+  }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -153,26 +159,30 @@ router.post('/order', verifyToken, async (req, res) => {
   }
 });
 
-// router.post('/order', verifyToken, async (req, res) => {
-//   const { items, totalAmount } = req.body;
-//   const userId = req.body.userId;
-//   try {
-//     const user = await FoodItem.User.findById(userId);
+router.post('/feedback',  async (req, res) => {
+  const email = req.body.email;
+  const comment  = req.body.comment;
+  console.log(req.body)
+  
+  
 
-//     if (!user) {
-//       return res.status(404).json({ error: 'User not found' });
-//     }
+  console.log("/feedback api called")
+  try {
+    let user = await FoodItem.User.findOne({ email });
+    if (user) {
+      console.log("the user from the api database",user);
+      user.feedback.push(comment);
+    } else {
+      user = new FoodItem.User({ email, feedback: [comment] });
+    }
+    await user.save();
+    res.send('Feedback saved successfully.');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error saving feedback.');
+  }
+});
 
-//     user.orders.push({ items,   totalAmount
-//  });
-
-//     await user.save();
-//     res.status(201).json({ message: 'Order placed successfully' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
 
 
 router.get('/orderhist', verifyToken, async (req, res) => {

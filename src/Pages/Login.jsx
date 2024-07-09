@@ -92,7 +92,13 @@ const Login = () => {
       });
 
       const data = await response.json();
+      console.log("from backend",data);
+      if(data.message =="odin has arrived") {
+        alert("welcome admin");
+        navigate("/adminDashboard");
+      } else {
       // const { token } = await response.json();
+      
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
@@ -108,6 +114,7 @@ const Login = () => {
       // console.log(decodedToken); 
       // localStorage.setItem('token', token);
       navigate('/table'); // 
+    }
     } catch (error) {
       setError(error.message);
     }

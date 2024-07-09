@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const FeedbackPage = () => {
+
+    const email = localStorage.getItem('email');
     const [feedbacks, setFeedbacks] = useState([]);
     const navigate = useNavigate();
 
@@ -9,18 +11,35 @@ const FeedbackPage = () => {
         name: '',
         comment: '',
     });
-
+   
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewFeedback((prevFeedback) => ({ ...prevFeedback, [name]: value }));
+        console.log("inside  inputChange",comment)
     };
-
+    const comment=newFeedback.comment
+    console.log("outside inputChange",comment)
     const handleSubmit = (e) => {
+        console.log("comment that is being sent to backend",comment)
         e.preventDefault();
         setFeedbacks((prevFeedbacks) => [...prevFeedbacks, newFeedback]);
         setNewFeedback({ name: '', comment: '' });
-    };
-
+        fetch('http://localhost:4000/api/feedback', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email,comment })
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert(data);
+          })
+          .catch(error => {
+            console.error('There was an error submitting the feedback!', error);
+          });
+        };
+  
     const goToMenu = () => {
         navigate('/menu');
       };
@@ -62,8 +81,8 @@ const FeedbackPage = () => {
                 <input
                     type="text"
                     name="name"
-                    value={newFeedback.name}
-                    onChange={handleInputChange}
+                    value={email}
+                    // onChange={handleInputChange}
                     placeholder="Your Name"
                     className="w-full p-2 mb-4 border rounded-lg"
                     required

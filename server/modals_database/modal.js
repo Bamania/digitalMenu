@@ -31,6 +31,9 @@ const UserSchema = new Schema({
     type: String,
    
   },
+  
+    feedback: [String],
+  
   orders: [OrderSchema],
   createdAt: {
     type: Date,
